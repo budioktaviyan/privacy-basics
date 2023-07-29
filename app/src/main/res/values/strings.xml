@@ -1,0 +1,4 @@
+<resources>
+  <string name="app_name">SecureX</string>
+  <string name="cameraPermissionDenied">The Camera permission has been denied!</string>
+</resources>
