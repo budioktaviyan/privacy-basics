@@ -1,11 +1,18 @@
 package id.android.basics.security
 
+import android.Manifest.permission.ACCESS_COARSE_LOCATION
+import android.Manifest.permission.ACCESS_FINE_LOCATION
+import android.Manifest.permission.CAMERA
+import android.app.Activity
 import android.app.DatePickerDialog
+import android.content.Context
+import android.content.ContextWrapper
 import android.net.Uri
 import android.text.format.DateUtils
 import android.text.format.DateUtils.FORMAT_ABBREV_ALL
 import android.widget.DatePicker
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.contract.ActivityResultContracts.PickMultipleVisualMedia
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -50,13 +57,17 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
@@ -94,15 +105,64 @@ fun AddLogScreen(
    * endregion
    */
 
-  // TODO: Step 1. Register ActivityResult to request Camera permission
+  val requestCameraPermission = rememberLauncherForActivityResult(
+    ActivityResultContracts.RequestPermission()
+  ) { isGranted ->
+    if (isGranted) {
+      viewModel.onPermissionChange(CAMERA, true)
 
-  // TODO: Step 3. Add explanation dialog for Camera permission
+      canAddPhoto {
+        navController.navigate(Screens.Camera.route)
+      }
+    } else {
+      coroutineScope.launch {
+        snackbarHostState.showSnackbar("Camera currently disabled due to denied permission")
+      }
+    }
+  }
 
-  // TODO: Step 5. Register ActivityResult to request Location permissions
+  var showExplanationDialogForCameraPermission by remember { mutableStateOf(false) }
+  if (showExplanationDialogForCameraPermission) {
+    CameraExplanationDialog(
+      onConfirm = {
+        requestCameraPermission.launch(CAMERA)
+        showExplanationDialogForCameraPermission = false
+      },
+      onDismiss = { showExplanationDialogForCameraPermission = false }
+    )
+  }
+
+  val requestLocationPermissions = rememberLauncherForActivityResult(
+    ActivityResultContracts.RequestPermission()
+  ) { isGranted ->
+    if (isGranted) {
+      viewModel.onPermissionChange(ACCESS_COARSE_LOCATION, true)
+      viewModel.onPermissionChange(ACCESS_FINE_LOCATION, true)
+      viewModel.fetchLocation()
+    } else {
+      coroutineScope.launch {
+        snackbarHostState.showSnackbar("Location currently disabled due to denied permission")
+      }
+    }
+  }
 
   // TODO: Step 8. Change activity result to only request Coarse Location
 
-  // TODO: Step 6. Add explanation dialog for Location permissions
+  var showExplanationDialogForLocationPermission by remember { mutableStateOf(false) }
+  if (showExplanationDialogForLocationPermission) {
+    LocationExplanationDialog(
+      onConfirm = {
+        // TODO: Step 10. Change location request to only request COARSE location
+        requestLocationPermissions.launch(
+          arrayOf(
+            ACCESS_COARSE_LOCATION,
+            ACCESS_FINE_LOCATION
+          ).toString())
+        showExplanationDialogForLocationPermission = false
+      },
+      onDismiss = { showExplanationDialogForLocationPermission = false }
+    )
+  }
 
   // TODO: Step 11. Register ActivityResult to launch the Photo Picker
 
@@ -233,10 +293,19 @@ fun AddLogScreen(
         ListItem(
           headlineContent = { Text("Location") },
           trailingContent = {
-            // TODO: Step 7. Check, request, and explain Location permissions
-              LocationPicker(state.place) {
-                viewModel.fetchLocation()
+            LocationPicker(state.place) {
+              when {
+                state.hasLocationAccess -> viewModel.fetchLocation()
+                ActivityCompat.shouldShowRequestPermissionRationale(context.getActivity(), ACCESS_COARSE_LOCATION) ||
+                ActivityCompat.shouldShowRequestPermissionRationale(context.getActivity(), ACCESS_FINE_LOCATION) ->
+                  showExplanationDialogForLocationPermission = true
+              else -> requestLocationPermissions.launch(
+                arrayOf(
+                  ACCESS_COARSE_LOCATION,
+                  ACCESS_FINE_LOCATION
+                ).toString())
               }
+            }
           // TODO: Step 9. Change location request to only request COARSE location
           }
         )
@@ -279,10 +348,14 @@ fun AddLogScreen(
              */
             IconButton(
               onClick = {
-                // TODO: Step 2. Check & request for Camera permission before navigating to the camera screen
-                  canAddPhoto {
-                    navController.navigate(Screens.Camera.route)
+                canAddPhoto {
+                  when {
+                    state.hasCameraAccess -> navController.navigate(Screens.Camera.route)
+                    ActivityCompat.shouldShowRequestPermissionRationale(context.getActivity(), CAMERA) ->
+                      showExplanationDialogForCameraPermission = true
+                    else -> requestCameraPermission.launch(CAMERA)
                   }
+                }
               }
             ) {
               Icon(
@@ -303,7 +376,8 @@ fun AddLogScreen(
         PhotoGrid(
           modifier = Modifier.padding(16.dp),
           photos = state.savedPhotos,
-          onRemove = { photo -> viewModel.onPhotoRemoved(photo) } )
+          onRemove = { photo -> viewModel.onPhotoRemoved(photo) }
+        )
       }
     }
   }
@@ -409,4 +483,18 @@ fun LocationExplanationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
       }
     }
   )
+}
+
+fun Context.getActivity(): Activity {
+  var currentContext = this
+
+  while (currentContext is ContextWrapper) {
+    if (currentContext is Activity) {
+      return currentContext
+    }
+
+    currentContext = currentContext.baseContext
+  }
+
+  throw IllegalStateException("Permissions should be called in the context of an Activity")
 }
