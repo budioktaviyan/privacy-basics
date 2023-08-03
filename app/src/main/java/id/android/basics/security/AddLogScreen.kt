@@ -1,7 +1,6 @@
 package id.android.basics.security
 
 import android.Manifest.permission.ACCESS_COARSE_LOCATION
-import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.Manifest.permission.CAMERA
 import android.app.Activity
 import android.app.DatePickerDialog
@@ -137,7 +136,6 @@ fun AddLogScreen(
   ) { isGranted ->
     if (isGranted) {
       viewModel.onPermissionChange(ACCESS_COARSE_LOCATION, true)
-      viewModel.onPermissionChange(ACCESS_FINE_LOCATION, true)
       viewModel.fetchLocation()
     } else {
       coroutineScope.launch {
@@ -146,18 +144,11 @@ fun AddLogScreen(
     }
   }
 
-  // TODO: Step 8. Change activity result to only request Coarse Location
-
   var showExplanationDialogForLocationPermission by remember { mutableStateOf(false) }
   if (showExplanationDialogForLocationPermission) {
     LocationExplanationDialog(
       onConfirm = {
-        // TODO: Step 10. Change location request to only request COARSE location
-        requestLocationPermissions.launch(
-          arrayOf(
-            ACCESS_COARSE_LOCATION,
-            ACCESS_FINE_LOCATION
-          ).toString())
+        requestLocationPermissions.launch(ACCESS_COARSE_LOCATION)
         showExplanationDialogForLocationPermission = false
       },
       onDismiss = { showExplanationDialogForLocationPermission = false }
@@ -296,17 +287,11 @@ fun AddLogScreen(
             LocationPicker(state.place) {
               when {
                 state.hasLocationAccess -> viewModel.fetchLocation()
-                ActivityCompat.shouldShowRequestPermissionRationale(context.getActivity(), ACCESS_COARSE_LOCATION) ||
-                ActivityCompat.shouldShowRequestPermissionRationale(context.getActivity(), ACCESS_FINE_LOCATION) ->
+                ActivityCompat.shouldShowRequestPermissionRationale(context.getActivity(), ACCESS_COARSE_LOCATION) ->
                   showExplanationDialogForLocationPermission = true
-              else -> requestLocationPermissions.launch(
-                arrayOf(
-                  ACCESS_COARSE_LOCATION,
-                  ACCESS_FINE_LOCATION
-                ).toString())
+                else -> requestLocationPermissions.launch(ACCESS_COARSE_LOCATION)
               }
             }
-          // TODO: Step 9. Change location request to only request COARSE location
           }
         )
         Divider()

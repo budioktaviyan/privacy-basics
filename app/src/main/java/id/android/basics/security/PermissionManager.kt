@@ -1,7 +1,6 @@
 package id.android.basics.security
 
 import android.Manifest.permission.ACCESS_COARSE_LOCATION
-import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.Manifest.permission.CAMERA
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.Manifest.permission.READ_MEDIA_IMAGES
@@ -30,7 +29,6 @@ class PermissionManager(private val context: Context) {
     val REQUIRED_PERMISSIONS_PRE_T = arrayOf(
       READ_EXTERNAL_STORAGE,
       CAMERA,
-      ACCESS_FINE_LOCATION,
       ACCESS_COARSE_LOCATION
     )
 
@@ -38,7 +36,6 @@ class PermissionManager(private val context: Context) {
     val REQUIRED_PERMISSIONS_POST_T = arrayOf(
       READ_MEDIA_IMAGES,
       CAMERA,
-      ACCESS_FINE_LOCATION,
       ACCESS_COARSE_LOCATION
     )
   }
@@ -51,12 +48,7 @@ class PermissionManager(private val context: Context) {
     State(
       hasStorageAccess = hasAccess(READ_EXTERNAL_STORAGE) || hasAccess(READ_MEDIA_IMAGES),
       hasCameraAccess = hasAccess(CAMERA),
-      hasLocationAccess = hasAccess(
-        listOf(
-          ACCESS_FINE_LOCATION,
-          ACCESS_COARSE_LOCATION
-        )
-      )
+      hasLocationAccess = hasAccess(ACCESS_COARSE_LOCATION)
     )
   )
 
@@ -64,7 +56,7 @@ class PermissionManager(private val context: Context) {
 
   @SuppressLint("InlinedApi")
   fun onPermissionChange(permissions: Map<String, Boolean>) {
-    val hasLocationAccess = hasAccess(ACCESS_FINE_LOCATION) && hasAccess(ACCESS_COARSE_LOCATION)
+    val hasLocationAccess = hasAccess(ACCESS_COARSE_LOCATION)
     val hasStorageAccess = hasAccess(READ_MEDIA_IMAGES) || hasAccess(READ_EXTERNAL_STORAGE)
 
     _state.value = State(
@@ -88,7 +80,7 @@ class PermissionManager(private val context: Context) {
     val newState = State(
       hasStorageAccess = hasAccess(READ_EXTERNAL_STORAGE) || hasAccess(READ_MEDIA_IMAGES),
       hasCameraAccess = hasAccess(CAMERA),
-      hasLocationAccess = hasAccess(ACCESS_FINE_LOCATION) && hasAccess(ACCESS_COARSE_LOCATION)
+      hasLocationAccess = hasAccess(ACCESS_COARSE_LOCATION)
     )
 
     _state.emit(newState)

@@ -88,9 +88,6 @@ class AddLogViewModel(
       Manifest.permission.ACCESS_COARSE_LOCATION -> {
         uiState = uiState.copy(hasLocationAccess = isGranted)
       }
-      Manifest.permission.ACCESS_FINE_LOCATION -> {
-        uiState = uiState.copy(hasLocationAccess = isGranted)
-      }
       Manifest.permission.CAMERA -> {
         uiState = uiState.copy(hasCameraAccess = isGranted)
       }
