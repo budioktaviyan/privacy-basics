@@ -11,8 +11,10 @@ import android.text.format.DateUtils
 import android.text.format.DateUtils.FORMAT_ABBREV_ALL
 import android.widget.DatePicker
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.contract.ActivityResultContracts.PickMultipleVisualMedia
+import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -154,8 +156,6 @@ fun AddLogScreen(
       onDismiss = { showExplanationDialogForLocationPermission = false }
     )
   }
-
-  // TODO: Step 11. Register ActivityResult to launch the Photo Picker
 
   /**
    * region Helper Functions
@@ -314,8 +314,7 @@ fun AddLogScreen(
                 canAddPhoto {
                   viewModel.loadLocalPickerPictures()
                   coroutineScope.launch {
-                    // TODO: Step 12. Replace the line below showing our internal photo picking UI and launch the Android Photo Picker instead
-                    internalPhotoPickerState.show()
+                    pickImage.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
                   }
                 }
               }
