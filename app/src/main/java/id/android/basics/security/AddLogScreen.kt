@@ -14,7 +14,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.contract.ActivityResultContracts.PickMultipleVisualMedia
-import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -314,7 +313,11 @@ fun AddLogScreen(
                 canAddPhoto {
                   viewModel.loadLocalPickerPictures()
                   coroutineScope.launch {
-                    pickImage.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
+                    pickImage.launch(
+                      PickVisualMediaRequest(
+                        ActivityResultContracts.PickVisualMedia.ImageOnly
+                      )
+                    )
                   }
                 }
               }

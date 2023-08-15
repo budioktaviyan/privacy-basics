@@ -4,13 +4,11 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.net.Uri
 import android.os.Build
 import android.os.Build.VERSION_CODES
-import android.provider.Settings
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -76,13 +74,6 @@ class AddLogViewModel(
     return uiState.place != null && !photoSaver.isEmpty() && !uiState.isSaving
   }
 
-  fun hasPermission(permission: String): Boolean {
-    return ContextCompat.checkSelfPermission(
-      context,
-      permission
-    ) == PackageManager.PERMISSION_GRANTED
-  }
-
   fun onPermissionChange(permission: String, isGranted: Boolean) {
     when (permission) {
       Manifest.permission.ACCESS_COARSE_LOCATION -> {
@@ -101,15 +92,6 @@ class AddLogViewModel(
     uiState = uiState.copy(date = dateInMillis)
   }
 
-  fun createSettingsIntent(): Intent {
-    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-      addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-      data = Uri.fromParts("package", context.packageName, null)
-    }
-
-    return intent
-  }
-
   private fun getTodayDateInMillis(): Long {
     val calendar = Calendar.getInstance()
     calendar.set(Calendar.HOUR, 0)
@@ -121,6 +103,13 @@ class AddLogViewModel(
 
   private fun getIsoDate(timeInMillis: Long): String {
     return SimpleDateFormat("yyyy-MM-dd", Locale.US).format(timeInMillis)
+  }
+
+  private fun hasPermission(permission: String): Boolean {
+    return ContextCompat.checkSelfPermission(
+      context,
+      permission
+    ) == PackageManager.PERMISSION_GRANTED
   }
   /**
    * endregion
